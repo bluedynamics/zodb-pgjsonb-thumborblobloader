@@ -45,7 +45,9 @@ def _parse_path(path: str) -> tuple[int, int]:
         raise ValueError(f"Invalid blob path: {path!r} (empty)")
     parts = stripped.split("/")
     if len(parts) != 2:
-        raise ValueError(f"Invalid blob path: {path!r} (expected '<zoid_hex>/<tid_hex>')")
+        raise ValueError(
+            f"Invalid blob path: {path!r} (expected '<zoid_hex>/<tid_hex>')"
+        )
     zoid_hex, tid_hex = parts
     if not zoid_hex or not tid_hex:
         raise ValueError(f"Invalid blob path: {path!r} (empty segment)")
@@ -182,7 +184,9 @@ async def load(context, path: str) -> LoaderResult:
         return await _load_from_s3(context, s3_key, blob_size, zoid, tid, cache)
 
     # Neither data nor s3_key — should not happen
-    logger.error("blob_state row has neither data nor s3_key: zoid=%d tid=%d", zoid, tid)
+    logger.error(
+        "blob_state row has neither data nor s3_key: zoid=%d tid=%d", zoid, tid
+    )
     return LoaderResult(
         successful=False,
         error=LoaderResult.ERROR_UPSTREAM,
@@ -190,7 +194,9 @@ async def load(context, path: str) -> LoaderResult:
     )
 
 
-async def _load_from_s3(context, s3_key: str, blob_size: int, zoid: int, tid: int, cache) -> LoaderResult:
+async def _load_from_s3(
+    context, s3_key: str, blob_size: int, zoid: int, tid: int, cache
+) -> LoaderResult:
     """Load blob bytes from S3."""
     bucket = context.config.get("PGTHUMBOR_S3_BUCKET", "")
     region = context.config.get("PGTHUMBOR_S3_REGION", "us-east-1")

@@ -54,7 +54,13 @@ class TestEndToEnd:
             s3_key = "blobs/000000000000dead/000000000000beef.blob"
             client.put_object(Bucket=S3_BUCKET, Key=s3_key, Body=blob_data)
 
-            insert_s3_blob(pg_conn, zoid=0xDEAD, tid=0xBEEF, s3_key=s3_key, blob_size=len(blob_data))
+            insert_s3_blob(
+                pg_conn,
+                zoid=0xDEAD,
+                tid=0xBEEF,
+                s3_key=s3_key,
+                blob_size=len(blob_data),
+            )
 
             cache_dir = str(tmp_path / "cache")
             ctx = make_context(
@@ -94,7 +100,9 @@ class TestEndToEnd:
         from zodb_pgjsonb_thumborblobloader.loader import load
 
         for i in range(5):
-            insert_pg_blob(pg_conn, zoid=i + 1, tid=i + 100, data=f"blob number {i}".encode())
+            insert_pg_blob(
+                pg_conn, zoid=i + 1, tid=i + 100, data=f"blob number {i}".encode()
+            )
 
         ctx = make_context()
         for i in range(5):

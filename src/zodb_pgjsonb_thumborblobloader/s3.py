@@ -35,7 +35,9 @@ def _get_s3_client(bucket: str, region: str, endpoint: str = ""):
     return _s3_client
 
 
-def _download_sync(bucket: str, region: str, s3_key: str, endpoint: str = "") -> bytes | None:
+def _download_sync(
+    bucket: str, region: str, s3_key: str, endpoint: str = ""
+) -> bytes | None:
     """Download S3 object synchronously.  Returns bytes or None on error."""
     client = _get_s3_client(bucket, region, endpoint)
     try:
@@ -47,6 +49,8 @@ def _download_sync(bucket: str, region: str, s3_key: str, endpoint: str = "") ->
         return None
 
 
-async def download_blob(bucket: str, region: str, s3_key: str, endpoint: str = "") -> bytes | None:
+async def download_blob(
+    bucket: str, region: str, s3_key: str, endpoint: str = ""
+) -> bytes | None:
     """Download S3 object asynchronously (runs boto3 in thread executor)."""
     return await asyncio.to_thread(_download_sync, bucket, region, s3_key, endpoint)

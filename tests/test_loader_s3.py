@@ -44,9 +44,13 @@ class TestLoadS3Blob:
             s3_key = "blobs/0000000000000042/00000000000000ff.blob"
             client.put_object(Bucket=S3_BUCKET, Key=s3_key, Body=blob_data)
 
-            insert_s3_blob(pg_conn, zoid=0x42, tid=0xFF, s3_key=s3_key, blob_size=len(blob_data))
+            insert_s3_blob(
+                pg_conn, zoid=0x42, tid=0xFF, s3_key=s3_key, blob_size=len(blob_data)
+            )
 
-            ctx = make_context(PGTHUMBOR_S3_BUCKET=S3_BUCKET, PGTHUMBOR_S3_REGION=S3_REGION)
+            ctx = make_context(
+                PGTHUMBOR_S3_BUCKET=S3_BUCKET, PGTHUMBOR_S3_REGION=S3_REGION
+            )
             result = await load(ctx, "42/ff")
 
             assert result.successful is True
@@ -61,9 +65,13 @@ class TestLoadS3Blob:
             client.create_bucket(Bucket=S3_BUCKET)
             # Do NOT upload the object
 
-            insert_s3_blob(pg_conn, zoid=0x42, tid=0xFF, s3_key="blobs/missing.blob", blob_size=100)
+            insert_s3_blob(
+                pg_conn, zoid=0x42, tid=0xFF, s3_key="blobs/missing.blob", blob_size=100
+            )
 
-            ctx = make_context(PGTHUMBOR_S3_BUCKET=S3_BUCKET, PGTHUMBOR_S3_REGION=S3_REGION)
+            ctx = make_context(
+                PGTHUMBOR_S3_BUCKET=S3_BUCKET, PGTHUMBOR_S3_REGION=S3_REGION
+            )
             result = await load(ctx, "42/ff")
 
             assert result.successful is False
@@ -72,7 +80,9 @@ class TestLoadS3Blob:
     async def test_s3_not_configured_but_needed(self, pg_conn):
         from zodb_pgjsonb_thumborblobloader.loader import load
 
-        insert_s3_blob(pg_conn, zoid=0x42, tid=0xFF, s3_key="blobs/no-config.blob", blob_size=100)
+        insert_s3_blob(
+            pg_conn, zoid=0x42, tid=0xFF, s3_key="blobs/no-config.blob", blob_size=100
+        )
 
         ctx = make_context(PGTHUMBOR_S3_BUCKET="", PGTHUMBOR_S3_REGION="")
         result = await load(ctx, "42/ff")

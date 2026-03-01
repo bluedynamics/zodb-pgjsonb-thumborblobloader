@@ -44,7 +44,9 @@ async def verify_schema(pool: AsyncConnectionPool) -> None:
     logger.info("Schema verified: blob_state table exists")
 
 
-async def get_pool(dsn: str, min_size: int = 1, max_size: int = 4) -> AsyncConnectionPool:
+async def get_pool(
+    dsn: str, min_size: int = 1, max_size: int = 4
+) -> AsyncConnectionPool:
     """Get or create the module-level async connection pool.
 
     The pool is created on first call and reused for subsequent calls.
