@@ -28,35 +28,45 @@ logger = logging.getLogger(__name__)
 _cache_instance = None
 
 
-def _parse_path(path: str) -> tuple[int, int]:
-    """Parse '<zoid_hex>/<tid_hex>' into (zoid, tid) integers.
+def _parse_path(path: str) -> tuple[int, int, int | None]:
+    """Parse blob path into (zoid, tid, content_zoid) integers.
+
+    Accepts two formats:
+    - '<zoid_hex>/<tid_hex>'                        → (zoid, tid, None)
+    - '<zoid_hex>/<tid_hex>/<content_zoid_hex>'     → (zoid, tid, content_zoid)
+
+    The 3-segment format is used for authenticated content where the Thumbor
+    handler must verify Plone access before delivering the image.
 
     Args:
         path: URL path segment, e.g. '0000000000000042/00000000000000ff'
+              or '0000000000000042/00000000000000ff/000000000000001a'
 
     Returns:
-        Tuple of (zoid, tid) as Python ints.
+        Tuple of (zoid, tid, content_zoid) as Python ints.
+        content_zoid is None for the 2-segment anonymous format.
 
     Raises:
-        ValueError: If path cannot be parsed as two hex segments.
+        ValueError: If path cannot be parsed as two or three hex segments.
     """
     stripped = path.strip("/")
     if not stripped:
         raise ValueError(f"Invalid blob path: {path!r} (empty)")
     parts = stripped.split("/")
-    if len(parts) != 2:
+    if len(parts) not in (2, 3):
         raise ValueError(
-            f"Invalid blob path: {path!r} (expected '<zoid_hex>/<tid_hex>')"
+            f"Invalid blob path: {path!r} "
+            f"(expected '<zoid_hex>/<tid_hex>[/<content_zoid_hex>]')"
         )
-    zoid_hex, tid_hex = parts
-    if not zoid_hex or not tid_hex:
+    if any(not p for p in parts):
         raise ValueError(f"Invalid blob path: {path!r} (empty segment)")
     try:
-        zoid = int(zoid_hex, 16)
-        tid = int(tid_hex, 16)
+        zoid = int(parts[0], 16)
+        tid = int(parts[1], 16)
+        content_zoid = int(parts[2], 16) if len(parts) == 3 else None
     except ValueError:
         raise ValueError(f"Invalid blob path: {path!r} (not valid hex)") from None
-    return zoid, tid
+    return zoid, tid, content_zoid
 
 
 def validate(context, url: str) -> bool:
@@ -93,7 +103,7 @@ async def load(context, path: str) -> LoaderResult:
     """
     # Parse path
     try:
-        zoid, tid = _parse_path(path)
+        zoid, tid, _ = _parse_path(path)
     except ValueError as exc:
         logger.warning("Bad request: %s", exc)
         return LoaderResult(

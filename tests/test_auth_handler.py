@@ -1,0 +1,241 @@
+"""Tests for the Thumbor auth handler (HANDLER_LISTS module)."""
+
+from __future__ import annotations
+
+from unittest.mock import AsyncMock
+from unittest.mock import MagicMock
+from unittest.mock import patch
+
+import pytest
+import time
+
+
+class TestIsHex:
+    """Test the _is_hex helper."""
+
+    def test_valid_hex(self):
+        from zodb_pgjsonb_thumborblobloader.auth_handler import _is_hex
+
+        assert _is_hex("42") is True
+        assert _is_hex("ff") is True
+        assert _is_hex("DEADBEEF") is True
+        assert _is_hex("0000000000000042") is True
+
+    def test_invalid_hex(self):
+        from zodb_pgjsonb_thumborblobloader.auth_handler import _is_hex
+
+        assert _is_hex("") is False
+        assert _is_hex("xyz") is False
+        assert _is_hex("unsafe") is False
+        assert _is_hex("500x400") is False
+        assert _is_hex("fit-in") is False
+
+
+class TestExtractContentZoid:
+    """Test _extract_content_zoid() URL parsing."""
+
+    def _make_handler(self, path):
+        """Build a minimal AuthImagingHandler-like object with a mocked request."""
+        from zodb_pgjsonb_thumborblobloader.auth_handler import AuthImagingHandler
+
+        handler = object.__new__(AuthImagingHandler)
+        handler.request = MagicMock()
+        handler.request.path = path
+        return handler
+
+    def test_three_segment_url_returns_last(self):
+        """3-segment URL: blob_zoid/tid/content_zoid → return content_zoid."""
+        handler = self._make_handler(
+            "/AbCdEf/unsafe/0000000000000042/00000000000000ff/000000000000001a"
+        )
+        result = handler._extract_content_zoid()
+        assert result == "000000000000001a"
+
+    def test_two_segment_url_returns_none(self):
+        """2-segment URL: blob_zoid/tid → return None (anonymous)."""
+        handler = self._make_handler(
+            "/AbCdEf/unsafe/0000000000000042/00000000000000ff"
+        )
+        result = handler._extract_content_zoid()
+        assert result is None
+
+    def test_short_hex_three_segments(self):
+        """Short (unpadded) hex values in 3-segment format."""
+        handler = self._make_handler("/hmac/500x400/42/ff/1a")
+        result = handler._extract_content_zoid()
+        assert result == "1a"
+
+    def test_operations_not_mistaken_for_hex(self):
+        """Operations like 'unsafe' contain non-hex chars — not matched."""
+        handler = self._make_handler("/hmac/unsafe/42/ff")
+        # 'unsafe' is not hex → last 3 segments don't all parse → None
+        result = handler._extract_content_zoid()
+        assert result is None
+
+    def test_fittin_not_mistaken_for_hex(self):
+        handler = self._make_handler("/hmac/fit-in/500x400/42/ff")
+        result = handler._extract_content_zoid()
+        assert result is None
+
+    def test_empty_path(self):
+        handler = self._make_handler("/")
+        result = handler._extract_content_zoid()
+        assert result is None
+
+
+class TestCheckAuth:
+    """Test _check_auth() Plone subrequest logic and caching."""
+
+    def _make_handler(self, plone_url="http://plone:8080/Plone", cache_ttl=60):
+        from zodb_pgjsonb_thumborblobloader.auth_handler import AuthImagingHandler
+        from zodb_pgjsonb_thumborblobloader.auth_handler import _auth_cache
+
+        _auth_cache.clear()
+
+        handler = object.__new__(AuthImagingHandler)
+        handler.request = MagicMock()
+        handler.request.headers = {"Cookie": "auth=abc123"}
+        handler.context = MagicMock()
+        handler.context.config.get = lambda key, default=None: {
+            "PGTHUMBOR_PLONE_AUTH_URL": plone_url,
+            "PGTHUMBOR_AUTH_CACHE_TTL": cache_ttl,
+        }.get(key, default)
+        return handler
+
+    @pytest.mark.asyncio
+    async def test_plone_200_returns_true(self):
+        handler = self._make_handler()
+        mock_response = MagicMock()
+        mock_response.code = 200
+
+        with patch(
+            "zodb_pgjsonb_thumborblobloader.auth_handler.AsyncHTTPClient"
+        ) as mock_client_cls:
+            mock_client = MagicMock()
+            mock_client.fetch = AsyncMock(return_value=mock_response)
+            mock_client_cls.return_value = mock_client
+
+            result = await handler._check_auth("000000000000001a")
+
+        assert result is True
+
+    @pytest.mark.asyncio
+    async def test_plone_403_returns_false(self):
+        handler = self._make_handler()
+        mock_response = MagicMock()
+        mock_response.code = 403
+
+        with patch(
+            "zodb_pgjsonb_thumborblobloader.auth_handler.AsyncHTTPClient"
+        ) as mock_client_cls:
+            mock_client = MagicMock()
+            mock_client.fetch = AsyncMock(return_value=mock_response)
+            mock_client_cls.return_value = mock_client
+
+            result = await handler._check_auth("000000000000001a")
+
+        assert result is False
+
+    @pytest.mark.asyncio
+    async def test_no_plone_url_returns_false(self):
+        """When PGTHUMBOR_PLONE_AUTH_URL is not set, fail closed."""
+        handler = self._make_handler(plone_url="")
+        result = await handler._check_auth("000000000000001a")
+        assert result is False
+
+    @pytest.mark.asyncio
+    async def test_exception_returns_false(self):
+        """Network errors fail closed."""
+        handler = self._make_handler()
+
+        with patch(
+            "zodb_pgjsonb_thumborblobloader.auth_handler.AsyncHTTPClient"
+        ) as mock_client_cls:
+            mock_client = MagicMock()
+            mock_client.fetch = AsyncMock(side_effect=Exception("connection refused"))
+            mock_client_cls.return_value = mock_client
+
+            result = await handler._check_auth("000000000000001a")
+
+        assert result is False
+
+    @pytest.mark.asyncio
+    async def test_cache_hit_skips_plone(self):
+        """A cached result should not trigger another Plone subrequest."""
+        from zodb_pgjsonb_thumborblobloader.auth_handler import _auth_cache
+
+        handler = self._make_handler()
+        cache_key = ("000000000000001a", "auth=abc123")
+        _auth_cache[cache_key] = (True, time.monotonic() + 60)
+
+        with patch(
+            "zodb_pgjsonb_thumborblobloader.auth_handler.AsyncHTTPClient"
+        ) as mock_client_cls:
+            result = await handler._check_auth("000000000000001a")
+            mock_client_cls.assert_not_called()
+
+        assert result is True
+
+    @pytest.mark.asyncio
+    async def test_expired_cache_triggers_new_request(self):
+        """An expired cache entry should trigger a fresh Plone subrequest."""
+        from zodb_pgjsonb_thumborblobloader.auth_handler import _auth_cache
+
+        handler = self._make_handler()
+        cache_key = ("000000000000001a", "auth=abc123")
+        _auth_cache[cache_key] = (False, time.monotonic() - 1)  # already expired
+
+        mock_response = MagicMock()
+        mock_response.code = 200
+
+        with patch(
+            "zodb_pgjsonb_thumborblobloader.auth_handler.AsyncHTTPClient"
+        ) as mock_client_cls:
+            mock_client = MagicMock()
+            mock_client.fetch = AsyncMock(return_value=mock_response)
+            mock_client_cls.return_value = mock_client
+
+            result = await handler._check_auth("000000000000001a")
+            mock_client.fetch.assert_called_once()
+
+        assert result is True
+
+    @pytest.mark.asyncio
+    async def test_forwards_cookie_header(self):
+        """Cookie header from original request is forwarded to Plone."""
+        handler = self._make_handler()
+        mock_response = MagicMock()
+        mock_response.code = 200
+
+        with patch(
+            "zodb_pgjsonb_thumborblobloader.auth_handler.AsyncHTTPClient"
+        ) as mock_client_cls:
+            from tornado.httpclient import HTTPRequest
+
+            mock_client = MagicMock()
+            mock_client.fetch = AsyncMock(return_value=mock_response)
+            mock_client_cls.return_value = mock_client
+
+            await handler._check_auth("000000000000001a")
+
+            call_args = mock_client.fetch.call_args
+            req = call_args[0][0]
+            assert req.headers.get("Cookie") == "auth=abc123"
+            assert req.headers.get("Accept") == "application/json"
+
+
+class TestGetHandlers:
+    """Test get_handlers() returns correct URL pattern."""
+
+    def test_returns_handler_list(self):
+        from zodb_pgjsonb_thumborblobloader.auth_handler import get_handlers
+        from zodb_pgjsonb_thumborblobloader.auth_handler import AuthImagingHandler
+
+        ctx = MagicMock()
+        handlers = get_handlers(ctx)
+        assert len(handlers) == 1
+        pattern, cls, kwargs = handlers[0]
+        assert cls is AuthImagingHandler
+        # Pattern is Url.regex() — a complex named-group regex; just verify it's a non-empty string
+        assert isinstance(pattern, str) and len(pattern) > 0
+        assert kwargs == {"context": ctx}
