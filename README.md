@@ -75,6 +75,14 @@ uv pip install -e ".[test,s3]"
 pytest
 ```
 
+## Documentation
+
+This package is documented together with [plone-pgthumbor](https://github.com/bluedynamics/plone-pgthumbor):
+**https://bluedynamics.github.io/plone-pgthumbor/**
+
+- [Architecture](https://github.com/bluedynamics/plone-pgthumbor/blob/main/docs/sources/explanation/architecture.md) -- request flow, loader integration
+- [Configuration Reference](https://github.com/bluedynamics/plone-pgthumbor/blob/main/docs/sources/reference/configuration.md) -- all thumbor.conf settings
+
 ## Source Code and Contributions
 
 The source code is managed in a Git repository, with its main branches hosted on GitHub.
