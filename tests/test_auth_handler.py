@@ -224,6 +224,109 @@ class TestCheckAuth:
             assert req.headers.get("Accept") == "application/json"
 
 
+class TestCacheControlHeaders:
+    """Test Cache-Control header overrides based on request type."""
+
+    def _make_handler(
+        self,
+        path="/hmac/300x200/42/ff/1a",
+        cc_auth="private, max-age=86400",
+        cc_public="",
+    ):
+        from zodb_pgjsonb_thumborblobloader.auth_handler import AuthImagingHandler
+        from zodb_pgjsonb_thumborblobloader.auth_handler import _auth_cache
+
+        _auth_cache.clear()
+
+        handler = object.__new__(AuthImagingHandler)
+        handler.request = MagicMock()
+        handler.request.path = path
+        handler.request.headers = {"Cookie": "auth=abc123"}
+        handler.context = MagicMock()
+        handler.context.config.get = lambda key, default=None: {
+            "PGTHUMBOR_PLONE_AUTH_URL": "http://plone:8080/Plone",
+            "PGTHUMBOR_AUTH_CACHE_TTL": 60,
+            "PGTHUMBOR_CACHE_CONTROL_AUTHENTICATED": cc_auth,
+            "PGTHUMBOR_CACHE_CONTROL_PUBLIC": cc_public,
+        }.get(key, default)
+        handler._headers = {}
+        return handler
+
+    def test_authenticated_request_sets_private(self):
+        """3-segment URL → _cache_control_override = private header."""
+        handler = self._make_handler(path="/hmac/300x200/42/ff/1a")
+        handler._extract_content_zoid()  # verify it's 3-segment
+        # Simulate what get() does after auth passes
+        handler._cache_control_override = handler.context.config.get(
+            "PGTHUMBOR_CACHE_CONTROL_AUTHENTICATED", "private, max-age=86400"
+        )
+        assert handler._cache_control_override == "private, max-age=86400"
+
+    def test_public_request_empty_default(self):
+        """2-segment URL → _cache_control_override = empty (Thumbor default)."""
+        handler = self._make_handler(path="/hmac/300x200/42/ff")
+        handler._cache_control_override = handler.context.config.get(
+            "PGTHUMBOR_CACHE_CONTROL_PUBLIC", ""
+        )
+        assert handler._cache_control_override == ""
+
+    def test_custom_authenticated_value(self):
+        handler = self._make_handler(cc_auth="private, no-store")
+        handler._cache_control_override = handler.context.config.get(
+            "PGTHUMBOR_CACHE_CONTROL_AUTHENTICATED", "private, max-age=86400"
+        )
+        assert handler._cache_control_override == "private, no-store"
+
+    def test_custom_public_value(self):
+        handler = self._make_handler(cc_public="public, max-age=3600, s-maxage=86400")
+        handler._cache_control_override = handler.context.config.get(
+            "PGTHUMBOR_CACHE_CONTROL_PUBLIC", ""
+        )
+        assert handler._cache_control_override == "public, max-age=3600, s-maxage=86400"
+
+    def test_finish_sets_header_when_override_present(self):
+        """finish() sets Cache-Control when _cache_control_override is set."""
+        handler = self._make_handler()
+        handler._cache_control_override = "private, max-age=86400"
+        headers_set = {}
+        handler.set_header = lambda k, v: headers_set.update({k: v})
+
+        with patch.object(
+            type(handler).__mro__[1], "finish", lambda self, *a, **kw: None
+        ):
+            handler.finish()
+
+        assert headers_set["Cache-Control"] == "private, max-age=86400"
+
+    def test_finish_skips_header_when_no_override(self):
+        """finish() does NOT touch Cache-Control when no override is set."""
+        handler = self._make_handler()
+        # No _cache_control_override attribute set
+        headers_set = {}
+        handler.set_header = lambda k, v: headers_set.update({k: v})
+
+        with patch.object(
+            type(handler).__mro__[1], "finish", lambda self, *a, **kw: None
+        ):
+            handler.finish()
+
+        assert "Cache-Control" not in headers_set
+
+    def test_finish_skips_header_when_empty_override(self):
+        """finish() does NOT touch Cache-Control when override is empty string."""
+        handler = self._make_handler()
+        handler._cache_control_override = ""
+        headers_set = {}
+        handler.set_header = lambda k, v: headers_set.update({k: v})
+
+        with patch.object(
+            type(handler).__mro__[1], "finish", lambda self, *a, **kw: None
+        ):
+            handler.finish()
+
+        assert "Cache-Control" not in headers_set
+
+
 class TestGetHandlers:
     """Test get_handlers() returns correct URL pattern."""
 

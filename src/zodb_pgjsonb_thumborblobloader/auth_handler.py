@@ -58,7 +58,22 @@ class AuthImagingHandler(ImagingHandler):
                 self.set_status(403)
                 self.finish()
                 return
+            self._cache_control_override = self.context.config.get(
+                "PGTHUMBOR_CACHE_CONTROL_AUTHENTICATED",
+                "private, max-age=86400",
+            )
+        else:
+            self._cache_control_override = self.context.config.get(
+                "PGTHUMBOR_CACHE_CONTROL_PUBLIC",
+                "",
+            )
         await super().get(**kwargs)
+
+    def finish(self, *args, **kwargs):
+        cc = getattr(self, "_cache_control_override", "")
+        if cc:
+            self.set_header("Cache-Control", cc)
+        super().finish(*args, **kwargs)
 
     def _extract_content_zoid(self) -> str | None:
         """Return the content_zoid hex string if this is a 3-segment URL, else None.
