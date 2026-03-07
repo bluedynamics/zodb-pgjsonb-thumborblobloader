@@ -65,6 +65,55 @@ Thumbor request
 
 The `blob_state` table is owned and managed by [zodb-pgjsonb](https://github.com/bluedynamics/zodb-pgjsonb) -- this loader only reads from it.
 
+## Docker Image
+
+A pre-built OCI image is available on GHCR:
+
+```bash
+docker pull ghcr.io/bluedynamics/zodb-pgjsonb-thumborblobloader:latest
+```
+
+Platforms: `linux/amd64`, `linux/arm64`
+
+### Image tags
+
+- `thumbor-<THUMBOR_VERSION>_loader-<LOADER_VERSION>` -- versioned (e.g. `thumbor-7.7.7_loader-0.3.0`)
+- `latest` -- always the newest build
+
+The image is automatically rebuilt weekly when a new Thumbor version appears on PyPI.
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PGTHUMBOR_DSN` | `""` | PostgreSQL connection string (required) |
+| `THUMBOR_SECURITY_KEY` | `"CHANGE-ME"` | Thumbor HMAC security key |
+| `ALLOW_UNSAFE_URL` | `"False"` | Allow unsigned URLs |
+| `RESULT_STORAGE_PATH` | `/tmp/thumbor/result_storage` | Result cache directory |
+| `PGTHUMBOR_POOL_MIN_SIZE` | `1` | Min DB pool connections |
+| `PGTHUMBOR_POOL_MAX_SIZE` | `4` | Max DB pool connections |
+| `PGTHUMBOR_CACHE_DIR` | `""` | Local blob cache directory (empty = disabled) |
+| `PGTHUMBOR_CACHE_MAX_SIZE` | `0` | Max cache size in bytes (0 = disabled) |
+| `PGTHUMBOR_S3_BUCKET` | `""` | S3 bucket for blob fallback (empty = disabled) |
+| `PGTHUMBOR_S3_REGION` | `us-east-1` | S3 region |
+| `PGTHUMBOR_S3_ENDPOINT` | `""` | S3 endpoint for MinIO/Ceph (empty = AWS) |
+| `PGTHUMBOR_PLONE_AUTH_URL` | `""` | Plone internal URL for auth (empty = disabled) |
+| `PGTHUMBOR_AUTH_CACHE_TTL` | `60` | Auth cache TTL in seconds |
+
+The Plone auth handler is only loaded when `PGTHUMBOR_PLONE_AUTH_URL` is set.
+
+### Quick start
+
+```bash
+docker run --rm -p 8888:8888 \
+  -e PGTHUMBOR_DSN="dbname=zodb user=zodb password=zodb host=localhost" \
+  -e THUMBOR_SECURITY_KEY="my-secret" \
+  ghcr.io/bluedynamics/zodb-pgjsonb-thumborblobloader:latest
+
+# Healthcheck
+curl http://localhost:8888/healthcheck
+```
+
 ## Development
 
 ```bash

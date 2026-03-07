@@ -74,27 +74,7 @@ gh workflow run docker.yaml
 
 Images are built for `linux/amd64` and `linux/arm64`.
 
-### Configuration
-
-The image is configured entirely via environment variables:
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `PGTHUMBOR_DSN` | `""` | PostgreSQL connection string (required) |
-| `THUMBOR_SECURITY_KEY` | `"CHANGE-ME"` | Thumbor HMAC security key |
-| `ALLOW_UNSAFE_URL` | `"False"` | Allow unsigned URLs |
-| `RESULT_STORAGE_PATH` | `/tmp/thumbor/result_storage` | Result cache directory |
-| `PGTHUMBOR_POOL_MIN_SIZE` | `1` | Min DB pool connections |
-| `PGTHUMBOR_POOL_MAX_SIZE` | `4` | Max DB pool connections |
-| `PGTHUMBOR_CACHE_DIR` | `""` | Local blob cache directory (empty = disabled) |
-| `PGTHUMBOR_CACHE_MAX_SIZE` | `0` | Max cache size in bytes (0 = disabled) |
-| `PGTHUMBOR_S3_BUCKET` | `""` | S3 bucket for blob fallback (empty = disabled) |
-| `PGTHUMBOR_S3_REGION` | `us-east-1` | S3 region |
-| `PGTHUMBOR_S3_ENDPOINT` | `""` | S3 endpoint for MinIO/Ceph (empty = AWS) |
-| `PGTHUMBOR_PLONE_AUTH_URL` | `""` | Plone internal URL for auth (empty = disabled) |
-| `PGTHUMBOR_AUTH_CACHE_TTL` | `60` | Auth cache TTL in seconds |
-
-The Plone auth handler is only loaded when `PGTHUMBOR_PLONE_AUTH_URL` is set.
+See `README.md` for the full list of environment variables.
 
 ## Full Release Checklist
 
