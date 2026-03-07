@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.3.0 (unreleased)
+## 0.3.0 (2026-03-07)
 
 - Add configurable Cache-Control headers for authenticated vs public images.
   Authenticated requests default to `private, max-age=86400` (browser-only,
