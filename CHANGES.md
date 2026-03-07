@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.0 (unreleased)
+
+- Nothing yet.
+
 ## 0.3.0 (2026-03-07)
 
 - Add configurable Cache-Control headers for authenticated vs public images.
