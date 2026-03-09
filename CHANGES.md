@@ -1,8 +1,9 @@
 # Changelog
 
-## 0.4.0 (unreleased)
+## 0.3.1 (2026-03-09)
 
-- Nothing yet.
+- Fix ruff lint/format errors that blocked CI.
+- Docker image now built after PyPI release with pinned package version.
 
 ## 0.3.0 (2026-03-07)
 

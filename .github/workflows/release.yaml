@@ -78,3 +78,57 @@ jobs:
 
       - name: Upload package to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+
+  docker:
+    name: Build & push Docker image
+    if: github.event.action == 'published'
+    needs:
+      - release-pypi
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    env:
+      IMAGE: ghcr.io/bluedynamics/zodb-pgjsonb-thumborblobloader
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Determine versions
+        id: versions
+        run: |
+          LOADER_VERSION="${GITHUB_REF_NAME#v}"
+          echo "loader=${LOADER_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "### Versions" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Loader: ${LOADER_VERSION}" >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: docker/setup-qemu-action@v3
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ${{ env.IMAGE }}
+          tags: |
+            type=raw,value=${{ steps.versions.outputs.loader }}
+            type=raw,value=latest
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            LOADER_VERSION=${{ steps.versions.outputs.loader }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
