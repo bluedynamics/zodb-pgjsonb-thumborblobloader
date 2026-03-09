@@ -138,9 +138,7 @@ class AuthImagingHandler(ImagingHandler):
             resp = await client.fetch(req, raise_error=False)
             result = resp.code == 200
         except Exception as exc:
-            logger.error(
-                "Auth check failed for zoid=%s: %s", content_zoid_hex, exc
-            )
+            logger.error("Auth check failed for zoid=%s: %s", content_zoid_hex, exc)
             result = False
 
         _auth_cache[cache_key] = (result, now + ttl)
