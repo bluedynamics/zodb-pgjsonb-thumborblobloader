@@ -53,9 +53,7 @@ class TestExtractContentZoid:
 
     def test_two_segment_url_returns_none(self):
         """2-segment URL: blob_zoid/tid → return None (anonymous)."""
-        handler = self._make_handler(
-            "/AbCdEf/unsafe/0000000000000042/00000000000000ff"
-        )
+        handler = self._make_handler("/AbCdEf/unsafe/0000000000000042/00000000000000ff")
         result = handler._extract_content_zoid()
         assert result is None
 
@@ -87,8 +85,8 @@ class TestCheckAuth:
     """Test _check_auth() Plone subrequest logic and caching."""
 
     def _make_handler(self, plone_url="http://plone:8080/Plone", cache_ttl=60):
-        from zodb_pgjsonb_thumborblobloader.auth_handler import AuthImagingHandler
         from zodb_pgjsonb_thumborblobloader.auth_handler import _auth_cache
+        from zodb_pgjsonb_thumborblobloader.auth_handler import AuthImagingHandler
 
         _auth_cache.clear()
 
@@ -210,8 +208,6 @@ class TestCheckAuth:
         with patch(
             "zodb_pgjsonb_thumborblobloader.auth_handler.AsyncHTTPClient"
         ) as mock_client_cls:
-            from tornado.httpclient import HTTPRequest
-
             mock_client = MagicMock()
             mock_client.fetch = AsyncMock(return_value=mock_response)
             mock_client_cls.return_value = mock_client
@@ -233,8 +229,8 @@ class TestCacheControlHeaders:
         cc_auth="private, max-age=86400",
         cc_public="",
     ):
-        from zodb_pgjsonb_thumborblobloader.auth_handler import AuthImagingHandler
         from zodb_pgjsonb_thumborblobloader.auth_handler import _auth_cache
+        from zodb_pgjsonb_thumborblobloader.auth_handler import AuthImagingHandler
 
         _auth_cache.clear()
 
@@ -331,8 +327,8 @@ class TestGetHandlers:
     """Test get_handlers() returns correct URL pattern."""
 
     def test_returns_handler_list(self):
-        from zodb_pgjsonb_thumborblobloader.auth_handler import get_handlers
         from zodb_pgjsonb_thumborblobloader.auth_handler import AuthImagingHandler
+        from zodb_pgjsonb_thumborblobloader.auth_handler import get_handlers
 
         ctx = MagicMock()
         handlers = get_handlers(ctx)
