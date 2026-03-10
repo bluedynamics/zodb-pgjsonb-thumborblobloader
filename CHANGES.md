@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.4.0 (unreleased)
+## 0.4.0 (2026-03-10)
 
 - Add smart cropping support via Thumbor's built-in detector system.
   Set `THUMBOR_DETECTORS` environment variable to enable face/feature detection
