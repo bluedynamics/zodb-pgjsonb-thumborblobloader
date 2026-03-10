@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.3.2 (unreleased)
+## 0.3.2 (2026-03-10)
 
 - Enable AUTO_WEBP by default for automatic WebP conversion when browser
   supports it. AUTO_AVIF available as opt-in. Both configurable via
