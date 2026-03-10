@@ -97,6 +97,8 @@ The image is automatically rebuilt weekly when a new Thumbor version appears on 
 | `PGTHUMBOR_S3_BUCKET` | `""` | S3 bucket for blob fallback (empty = disabled) |
 | `PGTHUMBOR_S3_REGION` | `us-east-1` | S3 region |
 | `PGTHUMBOR_S3_ENDPOINT` | `""` | S3 endpoint for MinIO/Ceph (empty = AWS) |
+| `THUMBOR_AUTO_WEBP` | `"true"` | Auto-convert to WebP when browser supports it |
+| `THUMBOR_AUTO_AVIF` | `"false"` | Auto-convert to AVIF when browser supports it |
 | `PGTHUMBOR_PLONE_AUTH_URL` | `""` | Plone internal URL for auth (empty = disabled) |
 | `PGTHUMBOR_AUTH_CACHE_TTL` | `60` | Auth cache TTL in seconds |
 | `PGTHUMBOR_CACHE_CONTROL_AUTHENTICATED` | `private, max-age=86400` | Cache-Control for authenticated images (browser-only, no proxy caching) |

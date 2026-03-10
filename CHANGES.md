@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.2 (unreleased)
+
+- Enable AUTO_WEBP by default for automatic WebP conversion when browser
+  supports it. AUTO_AVIF available as opt-in. Both configurable via
+  `THUMBOR_AUTO_WEBP` and `THUMBOR_AUTO_AVIF` environment variables.
+
 ## 0.3.1 (2026-03-09)
 
 - Fix ruff lint/format errors that blocked CI.
