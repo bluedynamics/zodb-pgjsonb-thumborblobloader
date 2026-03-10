@@ -103,6 +103,18 @@ jobs:
           echo "### Versions" >> "$GITHUB_STEP_SUMMARY"
           echo "- Loader: ${LOADER_VERSION}" >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Wait for PyPI index propagation
+        run: |
+          for i in $(seq 1 12); do
+            if pip index versions zodb-pgjsonb-thumborblobloader 2>/dev/null | grep -q "${{ steps.versions.outputs.loader }}"; then
+              echo "Version ${{ steps.versions.outputs.loader }} available on PyPI"
+              exit 0
+            fi
+            echo "Waiting for PyPI index (attempt $i/12)..."
+            sleep 10
+          done
+          echo "::warning::Version not yet visible on PyPI after 2 minutes, proceeding anyway"
+
       - uses: docker/setup-qemu-action@v3
 
       - uses: docker/setup-buildx-action@v3
