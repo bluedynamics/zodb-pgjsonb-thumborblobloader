@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.0 (unreleased)
+
+- Add smart cropping support via Thumbor's built-in detector system.
+  Set `THUMBOR_DETECTORS` environment variable to enable face/feature detection
+  for `/smart/` URLs. Docker image now includes `opencv-python-headless`.
+
 ## 0.3.2 (2026-03-10)
 
 - Enable AUTO_WEBP by default for automatic WebP conversion when browser

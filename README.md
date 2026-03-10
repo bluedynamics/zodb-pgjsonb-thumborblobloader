@@ -99,6 +99,7 @@ The image is automatically rebuilt weekly when a new Thumbor version appears on 
 | `PGTHUMBOR_S3_ENDPOINT` | `""` | S3 endpoint for MinIO/Ceph (empty = AWS) |
 | `THUMBOR_AUTO_WEBP` | `"true"` | Auto-convert to WebP when browser supports it |
 | `THUMBOR_AUTO_AVIF` | `"false"` | Auto-convert to AVIF when browser supports it |
+| `THUMBOR_DETECTORS` | `""` | Comma-separated Thumbor detector modules for `/smart/` URLs (empty = disabled) |
 | `PGTHUMBOR_PLONE_AUTH_URL` | `""` | Plone internal URL for auth (empty = disabled) |
 | `PGTHUMBOR_AUTH_CACHE_TTL` | `60` | Auth cache TTL in seconds |
 | `PGTHUMBOR_CACHE_CONTROL_AUTHENTICATED` | `private, max-age=86400` | Cache-Control for authenticated images (browser-only, no proxy caching) |
@@ -117,6 +118,30 @@ docker run --rm -p 8888:8888 \
 # Healthcheck
 curl http://localhost:8888/healthcheck
 ```
+
+### Smart cropping
+
+Enable content-aware cropping by setting the `THUMBOR_DETECTORS` environment variable:
+
+```bash
+docker run --rm -p 8888:8888 \
+  -e PGTHUMBOR_DSN="dbname=zodb user=zodb password=zodb host=localhost" \
+  -e THUMBOR_SECURITY_KEY="my-secret" \
+  -e THUMBOR_DETECTORS="thumbor.detectors.face_detector,thumbor.detectors.feature_detector" \
+  ghcr.io/bluedynamics/zodb-pgjsonb-thumborblobloader:latest
+```
+
+When detectors are configured, adding `/smart/` to Thumbor URLs activates
+face/feature detection for intelligent cropping. Face detection is tried first;
+if no faces are found, feature detection (corners/edges) is used as fallback.
+Results are cached by Thumbor's result storage, so detection runs only once per
+unique URL.
+
+Available detectors:
+- `thumbor.detectors.face_detector` -- frontal face detection (OpenCV Haar cascade)
+- `thumbor.detectors.feature_detector` -- corner/edge detection (OpenCV good-features-to-track)
+- `thumbor.detectors.profile_detector` -- side profile face detection
+- `thumbor.detectors.glasses_detector` -- glasses detection (supplements face detector)
 
 ## Development
 
