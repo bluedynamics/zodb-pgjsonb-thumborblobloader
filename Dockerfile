@@ -7,7 +7,7 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 RUN uv pip install --system --no-cache \
     "thumbor>=7.0" \
     "opencv-python-headless>=4.8" \
-    "zodb-pgjsonb-thumborblobloader${LOADER_VERSION:+==$LOADER_VERSION}"
+    "zodb-pgjsonb-thumborblobloader[s3]${LOADER_VERSION:+==$LOADER_VERSION}"
 
 COPY thumbor.conf /etc/thumbor.conf
 

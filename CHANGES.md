@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.1 (2026-04-02)
+
+- Fix: Docker image missing `boto3` — S3 blob loading failed with
+  `ModuleNotFoundError: No module named 'botocore'`.
+  Install package with `[s3]` extra in Dockerfile.
+  Fixes [#1](https://github.com/bluedynamics/zodb-pgjsonb-thumborblobloader/issues/1).
+
 ## 0.4.0 (2026-03-10)
 
 - Add smart cropping support via Thumbor's built-in detector system.
