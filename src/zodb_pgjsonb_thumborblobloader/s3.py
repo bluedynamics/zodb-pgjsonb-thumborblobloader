@@ -10,6 +10,7 @@ from botocore.exceptions import ClientError
 
 import asyncio
 import logging
+import os
 
 
 logger = logging.getLogger(__name__)
@@ -30,6 +31,11 @@ def _get_s3_client(bucket: str, region: str, endpoint: str = ""):
     kwargs: dict = {"region_name": region}
     if endpoint:
         kwargs["endpoint_url"] = endpoint
+    access_key = os.environ.get("PGTHUMBOR_S3_ACCESS_KEY", "")
+    secret_key = os.environ.get("PGTHUMBOR_S3_SECRET_KEY", "")
+    if access_key and secret_key:
+        kwargs["aws_access_key_id"] = access_key
+        kwargs["aws_secret_access_key"] = secret_key
     _s3_client = boto3.client("s3", **kwargs)
     _s3_config = key
     return _s3_client

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.2 (2026-04-02)
+
+- Fix: S3 loader now reads `PGTHUMBOR_S3_ACCESS_KEY` and `PGTHUMBOR_S3_SECRET_KEY`
+  env vars and passes them to boto3. Previously credentials were only picked up
+  via boto3's default chain (`AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY`).
+  Fixes [#2](https://github.com/bluedynamics/zodb-pgjsonb-thumborblobloader/issues/2).
+
 ## 0.4.1 (2026-04-02)
 
 - Fix: Docker image missing `boto3` — S3 blob loading failed with

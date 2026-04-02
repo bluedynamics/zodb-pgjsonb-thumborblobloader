@@ -97,6 +97,8 @@ The image is automatically rebuilt weekly when a new Thumbor version appears on 
 | `PGTHUMBOR_S3_BUCKET` | `""` | S3 bucket for blob fallback (empty = disabled) |
 | `PGTHUMBOR_S3_REGION` | `us-east-1` | S3 region |
 | `PGTHUMBOR_S3_ENDPOINT` | `""` | S3 endpoint for MinIO/Ceph (empty = AWS) |
+| `PGTHUMBOR_S3_ACCESS_KEY` | `""` | S3 access key (empty = boto3 default chain) |
+| `PGTHUMBOR_S3_SECRET_KEY` | `""` | S3 secret key (empty = boto3 default chain) |
 | `THUMBOR_AUTO_WEBP` | `"true"` | Auto-convert to WebP when browser supports it |
 | `THUMBOR_AUTO_AVIF` | `"false"` | Auto-convert to AVIF when browser supports it |
 | `THUMBOR_DETECTORS` | `""` | Comma-separated Thumbor detector modules for `/smart/` URLs (empty = disabled) |
