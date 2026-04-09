@@ -38,6 +38,7 @@ test = [
     "coverage[toml]>=7.0",
     "pytest-asyncio",
     "moto[s3]>=4.0",
+    "testcontainers[postgres]",
 ]
 
 [tool.hatch.build.targets.sdist]

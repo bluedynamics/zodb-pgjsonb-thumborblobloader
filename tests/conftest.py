@@ -7,12 +7,33 @@ import psycopg
 import pytest
 
 
-# Allow DSN override via environment variable for CI.
-# Default: local Docker on port 5433 (development setup).
-DSN = os.environ.get(
-    "ZODB_TEST_DSN",
-    "dbname=zodb_test user=zodb password=zodb host=localhost port=5433",
-)
+def _get_test_dsn():
+    """Resolve PostgreSQL DSN: env var → local Docker → testcontainers."""
+    _DEFAULT = "dbname=zodb_test user=zodb password=zodb host=localhost port=5433"
+    env_dsn = os.environ.get("ZODB_TEST_DSN")
+    if env_dsn:
+        return env_dsn
+    try:
+        conn = psycopg.connect(_DEFAULT, connect_timeout=2)
+        conn.close()
+        return _DEFAULT
+    except Exception:
+        pass
+    from testcontainers.postgres import PostgresContainer
+
+    import atexit
+
+    container = PostgresContainer(
+        image="postgres:17", username="zodb", password="zodb", dbname="zodb_test"
+    )
+    container.start()
+    atexit.register(container.stop)
+    host = container.get_container_host_ip()
+    port = container.get_exposed_port(5432)
+    return f"dbname=zodb_test user=zodb password=zodb host={host} port={port}"
+
+
+DSN = _get_test_dsn()
 
 BLOB_STATE_DDL = """\
 CREATE TABLE IF NOT EXISTS blob_state (
