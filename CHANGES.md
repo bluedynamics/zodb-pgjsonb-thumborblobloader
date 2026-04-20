@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.4.3 (unreleased)
+## 0.4.2 (2026-04-20)
 
 - Fix: `AuthImagingHandler.finish()` no longer applies the long-TTL
   `Cache-Control` override to error responses (4xx/5xx).  Previously a
@@ -26,12 +26,15 @@
   (`min(32, cpu+4)`) plus headroom.
   Fixes [#6](https://github.com/bluedynamics/zodb-pgjsonb-thumborblobloader/issues/6).
 
-## 0.4.2 (2026-04-02)
-
-- Fix: S3 loader now reads `PGTHUMBOR_S3_ACCESS_KEY` and `PGTHUMBOR_S3_SECRET_KEY`
-  env vars and passes them to boto3. Previously credentials were only picked up
-  via boto3's default chain (`AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY`).
+- Fix: S3 loader now reads `PGTHUMBOR_S3_ACCESS_KEY` and
+  `PGTHUMBOR_S3_SECRET_KEY` env vars and passes them to boto3.
+  Previously credentials were only picked up via boto3's default chain
+  (`AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY`).
   Fixes [#2](https://github.com/bluedynamics/zodb-pgjsonb-thumborblobloader/issues/2).
+
+- Test-infra: test suite now falls back to an ephemeral PostgreSQL
+  container via `testcontainers` when `ZODB_TEST_DSN` is not set,
+  so tests run without any prior local Postgres setup.
 
 ## 0.4.1 (2026-04-02)
 
