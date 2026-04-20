@@ -2,6 +2,20 @@
 
 ## 0.4.3 (unreleased)
 
+- Fix: `AuthImagingHandler.finish()` no longer applies the long-TTL
+  `Cache-Control` override to error responses (4xx/5xx).  Previously a
+  transient Thumbor 400 (e.g. a PIL decompression-bomb rejection) would
+  inherit `public, max-age=31536000, immutable` and get pinned in
+  downstream HTTP caches (Varnish, CDN) for a year — a single bad fetch
+  persistently hid the image on every shard that cached it.
+  Errors now get a short microcache (`PGTHUMBOR_CACHE_CONTROL_ERROR`,
+  default `public, max-age=10`) instead: decouples transient errors
+  from long-term cache poisoning AND lets downstream caches absorb
+  request floods for broken URLs (cheap DoS amplification defense —
+  a single bad URL won't fan out to one Thumbor hit per request).
+  3xx responses are left untouched (Thumbor default).
+  Fixes [#5](https://github.com/bluedynamics/zodb-pgjsonb-thumborblobloader/issues/5).
+
 - Fix: boto3 S3 client is now created with an explicit
   `max_pool_connections` via `botocore.Config` (default 50, overridable
   via `PGTHUMBOR_S3_MAX_POOL_CONNECTIONS`).  The boto3 default of 10

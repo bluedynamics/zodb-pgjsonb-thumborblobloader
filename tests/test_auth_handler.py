@@ -228,6 +228,8 @@ class TestCacheControlHeaders:
         path="/hmac/300x200/42/ff/1a",
         cc_auth="private, max-age=86400",
         cc_public="",
+        cc_error="public, max-age=10",
+        status=200,
     ):
         from zodb_pgjsonb_thumborblobloader.auth_handler import _auth_cache
         from zodb_pgjsonb_thumborblobloader.auth_handler import AuthImagingHandler
@@ -239,13 +241,17 @@ class TestCacheControlHeaders:
         handler.request.path = path
         handler.request.headers = {"Cookie": "auth=abc123"}
         handler.context = MagicMock()
-        handler.context.config.get = lambda key, default=None: {
+        config = {
             "PGTHUMBOR_PLONE_AUTH_URL": "http://plone:8080/Plone",
             "PGTHUMBOR_AUTH_CACHE_TTL": 60,
             "PGTHUMBOR_CACHE_CONTROL_AUTHENTICATED": cc_auth,
             "PGTHUMBOR_CACHE_CONTROL_PUBLIC": cc_public,
-        }.get(key, default)
+        }
+        if cc_error is not None:
+            config["PGTHUMBOR_CACHE_CONTROL_ERROR"] = cc_error
+        handler.context.config.get = lambda key, default=None: config.get(key, default)
         handler._headers = {}
+        handler.get_status = lambda: status
         return handler
 
     def test_authenticated_request_sets_private(self):
@@ -312,6 +318,78 @@ class TestCacheControlHeaders:
         """finish() does NOT touch Cache-Control when override is empty string."""
         handler = self._make_handler()
         handler._cache_control_override = ""
+        headers_set = {}
+        handler.set_header = lambda k, v: headers_set.update({k: v})
+
+        with patch.object(
+            type(handler).__mro__[1], "finish", lambda self, *a, **kw: None
+        ):
+            handler.finish()
+
+        assert "Cache-Control" not in headers_set
+
+    def test_finish_error_status_gets_microcache(self):
+        """4xx response gets a short microcache, not the long-TTL override."""
+        handler = self._make_handler(status=400)
+        handler._cache_control_override = "public, max-age=31536000, immutable"
+        headers_set = {}
+        handler.set_header = lambda k, v: headers_set.update({k: v})
+
+        with patch.object(
+            type(handler).__mro__[1], "finish", lambda self, *a, **kw: None
+        ):
+            handler.finish()
+
+        # The long-TTL override MUST NOT leak into the error response.
+        assert headers_set["Cache-Control"] == "public, max-age=10"
+
+    def test_finish_error_without_override_still_gets_microcache(self):
+        """Error responses get a microcache even if no override was set."""
+        handler = self._make_handler(status=404)
+        # No _cache_control_override attribute set at all
+        headers_set = {}
+        handler.set_header = lambda k, v: headers_set.update({k: v})
+
+        with patch.object(
+            type(handler).__mro__[1], "finish", lambda self, *a, **kw: None
+        ):
+            handler.finish()
+
+        assert headers_set["Cache-Control"] == "public, max-age=10"
+
+    def test_finish_5xx_also_microcached(self):
+        """5xx responses get the same microcache treatment as 4xx."""
+        handler = self._make_handler(status=503)
+        handler._cache_control_override = "public, max-age=31536000, immutable"
+        headers_set = {}
+        handler.set_header = lambda k, v: headers_set.update({k: v})
+
+        with patch.object(
+            type(handler).__mro__[1], "finish", lambda self, *a, **kw: None
+        ):
+            handler.finish()
+
+        assert headers_set["Cache-Control"] == "public, max-age=10"
+
+    def test_finish_error_microcache_configurable(self):
+        """PGTHUMBOR_CACHE_CONTROL_ERROR overrides the default microcache."""
+        handler = self._make_handler(
+            status=400, cc_error="private, max-age=30, must-revalidate"
+        )
+        headers_set = {}
+        handler.set_header = lambda k, v: headers_set.update({k: v})
+
+        with patch.object(
+            type(handler).__mro__[1], "finish", lambda self, *a, **kw: None
+        ):
+            handler.finish()
+
+        assert headers_set["Cache-Control"] == "private, max-age=30, must-revalidate"
+
+    def test_finish_3xx_leaves_cache_control_alone(self):
+        """Redirects: no long-TTL override, no microcache — Thumbor default."""
+        handler = self._make_handler(status=304)
+        handler._cache_control_override = "public, max-age=31536000, immutable"
         headers_set = {}
         handler.set_header = lambda k, v: headers_set.update({k: v})
 

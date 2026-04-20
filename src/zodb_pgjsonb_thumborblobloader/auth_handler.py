@@ -70,9 +70,28 @@ class AuthImagingHandler(ImagingHandler):
         await super().get(**kwargs)
 
     def finish(self, *args, **kwargs):
+        # Only apply the long-TTL Cache-Control override on success.
+        # Otherwise a transient 4xx/5xx from Thumbor (e.g. a PIL
+        # decompression-bomb 400) would get pinned in downstream HTTP
+        # caches for the full max-age window, hiding the image for a year.
+        #
+        # Errors get a short "microcache" TTL instead of no-store: it
+        # decouples transient errors from long-term cache poisoning,
+        # *and* it absorbs request floods for the same broken URL —
+        # downstream caches serve the error themselves for the next
+        # few seconds instead of each request hitting Thumbor. Cheap
+        # DoS amplification defense on top of the primary fix.
+        status = self.get_status()
         cc = getattr(self, "_cache_control_override", "")
-        if cc:
-            self.set_header("Cache-Control", cc)
+        if 200 <= status < 300:
+            if cc:
+                self.set_header("Cache-Control", cc)
+        elif status >= 400:
+            error_cc = self.context.config.get(
+                "PGTHUMBOR_CACHE_CONTROL_ERROR",
+                "public, max-age=10",
+            )
+            self.set_header("Cache-Control", error_cc)
         super().finish(*args, **kwargs)
 
     def _extract_content_zoid(self) -> str | None:
