@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.3 (unreleased)
+
+- Nothing changed yet.
+
 ## 0.4.2 (2026-04-20)
 
 - Fix: `AuthImagingHandler.finish()` no longer applies the long-TTL
