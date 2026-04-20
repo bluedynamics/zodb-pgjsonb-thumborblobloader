@@ -6,6 +6,7 @@ since boto3 does not natively support async.
 
 from __future__ import annotations
 
+from botocore.config import Config
 from botocore.exceptions import ClientError
 
 import asyncio
@@ -14,6 +15,13 @@ import os
 
 
 logger = logging.getLogger(__name__)
+
+# boto3's default urllib3 max_pool_connections is 10 — too low for
+# concurrent Thumbor image loads (30 thumbnails per listing page times
+# active visitors easily exceeds it, causing connection discard/reopen
+# churn and handshake-failure-induced 400s).  50 covers
+# asyncio.to_thread's default executor (min(32, cpu+4)) plus headroom.
+DEFAULT_MAX_POOL_CONNECTIONS = 50
 
 _s3_client = None
 _s3_config: tuple[str, str, str] | None = None
@@ -28,7 +36,15 @@ def _get_s3_client(bucket: str, region: str, endpoint: str = ""):
 
     import boto3
 
-    kwargs: dict = {"region_name": region}
+    max_pool = int(
+        os.environ.get(
+            "PGTHUMBOR_S3_MAX_POOL_CONNECTIONS", str(DEFAULT_MAX_POOL_CONNECTIONS)
+        )
+    )
+    kwargs: dict = {
+        "region_name": region,
+        "config": Config(max_pool_connections=max_pool),
+    }
     if endpoint:
         kwargs["endpoint_url"] = endpoint
     access_key = os.environ.get("PGTHUMBOR_S3_ACCESS_KEY", "")
