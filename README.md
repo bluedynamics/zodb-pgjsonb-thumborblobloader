@@ -106,6 +106,7 @@ The image is automatically rebuilt weekly when a new Thumbor version appears on 
 | `PGTHUMBOR_AUTH_CACHE_TTL` | `60` | Auth cache TTL in seconds |
 | `PGTHUMBOR_CACHE_CONTROL_AUTHENTICATED` | `private, max-age=86400` | Cache-Control for authenticated images (browser-only, no proxy caching) |
 | `PGTHUMBOR_CACHE_CONTROL_PUBLIC` | `""` | Cache-Control for public images (empty = Thumbor default) |
+| `PGTHUMBOR_CACHE_CONTROL_ERROR` | `public, max-age=10` | Cache-Control for 4xx/5xx responses — microcache decouples transient errors from long-term cache poisoning and absorbs request floods for broken URLs |
 
 The Plone auth handler (and Cache-Control overrides) is only loaded when `PGTHUMBOR_PLONE_AUTH_URL` is set.
 
