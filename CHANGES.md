@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.4.3 (unreleased)
+
+- Fix: boto3 S3 client is now created with an explicit
+  `max_pool_connections` via `botocore.Config` (default 50, overridable
+  via `PGTHUMBOR_S3_MAX_POOL_CONNECTIONS`).  The boto3 default of 10
+  caused urllib3 pool-full warnings and connection churn under normal
+  Thumbor load (30 thumbnails per listing page times active visitors),
+  which in turn correlated with intermittent Thumbor 400s on aaf-6
+  prod.  50 covers `asyncio.to_thread`'s default executor
+  (`min(32, cpu+4)`) plus headroom.
+  Fixes [#6](https://github.com/bluedynamics/zodb-pgjsonb-thumborblobloader/issues/6).
+
 ## 0.4.2 (2026-04-02)
 
 - Fix: S3 loader now reads `PGTHUMBOR_S3_ACCESS_KEY` and `PGTHUMBOR_S3_SECRET_KEY`

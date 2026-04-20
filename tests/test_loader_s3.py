@@ -30,6 +30,34 @@ def _reset_s3_client():
     s3_mod._s3_config = None
 
 
+class TestS3ClientConfig:
+    """Verify the boto3 client is created with an explicit max_pool_connections."""
+
+    def test_default_max_pool_connections(self, monkeypatch):
+        from unittest.mock import patch
+        from zodb_pgjsonb_thumborblobloader import s3 as s3_mod
+
+        monkeypatch.delenv("PGTHUMBOR_S3_MAX_POOL_CONNECTIONS", raising=False)
+
+        with patch("boto3.client") as mock_client:
+            s3_mod._get_s3_client("bucket", "us-east-1")
+
+        kwargs = mock_client.call_args.kwargs
+        assert kwargs["config"].max_pool_connections == 50
+
+    def test_env_override_max_pool_connections(self, monkeypatch):
+        from unittest.mock import patch
+        from zodb_pgjsonb_thumborblobloader import s3 as s3_mod
+
+        monkeypatch.setenv("PGTHUMBOR_S3_MAX_POOL_CONNECTIONS", "128")
+
+        with patch("boto3.client") as mock_client:
+            s3_mod._get_s3_client("bucket", "us-east-1")
+
+        kwargs = mock_client.call_args.kwargs
+        assert kwargs["config"].max_pool_connections == 128
+
+
 class TestLoadS3Blob:
     """Test loading blobs from S3 via s3_key."""
 
