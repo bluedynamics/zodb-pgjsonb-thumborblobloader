@@ -2,7 +2,9 @@
 
 ## 0.4.3 (unreleased)
 
-- Nothing changed yet.
+- Feature: support optional file extensions in URL paths (e.g. `.../zoid/tid.jpg`).
+  The loader now robustly strips extensions from the last segment before
+  parsing hexadecimal OIDs and TIDs.
 
 ## 0.4.2 (2026-04-20)
 
