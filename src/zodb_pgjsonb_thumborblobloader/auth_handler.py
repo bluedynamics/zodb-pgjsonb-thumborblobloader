@@ -95,34 +95,17 @@ class AuthImagingHandler(ImagingHandler):
         super().finish(*args, **kwargs)
 
     def _extract_content_zoid(self) -> str | None:
-        """Return the content_zoid hex string if this is a 3-segment URL, else None.
-
-        Thumbor URL structure:
-            /{hmac}/{ops}/{blob_zoid}/{tid}                   ← 2-segment (anonymous)
-            /{hmac}/{ops}/{blob_zoid}/{tid}/{content_zoid}    ← 3-segment (authenticated)
-
-        We check if the last 3 path segments are all valid hex. If yes,
-        it's a 3-segment authenticated URL and we return the last segment.
-        If only the last 2 are valid hex, it's anonymous — return None.
-
-        Both formats may optionally include a file extension on the last segment.
-        """
+        """Return the content_zoid hex string if this is a 3-segment URL, else None."""
         parts = [p for p in self.request.path.split("/") if p]
-        if len(parts) < 2:
-            return None
 
-        # Work on a copy of the last segments to strip extensions for validation
-        segments = list(parts[-3:])
-        if "." in segments[-1]:
-            segments[-1] = segments[-1].split(".", 1)[0]
-
-        if (
-            len(segments) >= 3
-            and _is_hex(segments[-1])
-            and _is_hex(segments[-2])
-            and _is_hex(segments[-3])
-        ):
-            return segments[-1]
+        if len(parts) >= 3:
+            content_zoid_hex = parts[-1].split(".", 1)[0]
+            if (
+                _is_hex(content_zoid_hex)
+                and _is_hex(parts[-2])
+                and _is_hex(parts[-3])
+            ):
+                return content_zoid_hex
         return None
 
     async def _check_auth(self, content_zoid_hex: str) -> bool:
