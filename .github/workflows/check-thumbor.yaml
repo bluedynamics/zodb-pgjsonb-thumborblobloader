@@ -9,6 +9,7 @@ on:
 permissions:
   contents: read
   packages: read
+  actions: write
 
 env:
   IMAGE: ghcr.io/bluedynamics/zodb-pgjsonb-thumborblobloader
@@ -33,7 +34,7 @@ jobs:
           if [ "$EXISTING" = "no" ]; then
             # Also check with a wildcard-like approach: list all tags
             TAGS=$(curl -sf \
-              -H "Authorization: Bearer $(echo ${{ secrets.GITHUB_TOKEN }} | base64)" \
+              -H "Authorization: Bearer $(echo -n "${{ secrets.GITHUB_TOKEN }}" | base64)" \
               "https://ghcr.io/v2/bluedynamics/zodb-pgjsonb-thumborblobloader/tags/list" 2>/dev/null \
               | jq -r '.tags[]?' 2>/dev/null || echo "")
             if echo "$TAGS" | grep -q "thumbor-${{ steps.pypi.outputs.version }}_"; then
