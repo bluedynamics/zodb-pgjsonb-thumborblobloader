@@ -20,6 +20,7 @@ from tornado.httpclient import HTTPRequest
 import logging
 import time
 
+
 logger = logging.getLogger(__name__)
 
 # (content_zoid_hex, cookie_header) -> (allowed: bool, expiry: float)
