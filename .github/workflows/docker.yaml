@@ -22,7 +22,7 @@ jobs:
     name: Build & push image
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -43,17 +43,17 @@ jobs:
           echo "- Thumbor: ${THUMBOR_VERSION}" >> "$GITHUB_STEP_SUMMARY"
           echo "- Loader: ${LOADER_VERSION}" >> "$GITHUB_STEP_SUMMARY"
 
-      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-qemu-action@v4
 
-      - uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@v4
 
-      - uses: docker/login-action@v3
+      - uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: docker/metadata-action@v5
+      - uses: docker/metadata-action@v6
         id: meta
         with:
           images: ${{ env.IMAGE }}
@@ -61,7 +61,7 @@ jobs:
             type=raw,value=thumbor-${{ steps.versions.outputs.thumbor }}_loader-${{ steps.versions.outputs.loader }}
             type=raw,value=latest
 
-      - uses: docker/build-push-action@v6
+      - uses: docker/build-push-action@v7
         with:
           context: .
           platforms: linux/amd64,linux/arm64
