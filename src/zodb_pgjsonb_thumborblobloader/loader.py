@@ -61,9 +61,16 @@ def _parse_path(path: str) -> tuple[int, int, int | None]:
     if any(not p for p in parts):
         raise ValueError(f"Invalid blob path: {path!r} (empty segment)")
     try:
+        # Strip optional extension from the last segment (tid or content_zoid)
+        last_hex = parts[-1].split(".", 1)[0]
+
         zoid = int(parts[0], 16)
-        tid = int(parts[1], 16)
-        content_zoid = int(parts[2], 16) if len(parts) == 3 else None
+        if len(parts) == 3:
+            tid = int(parts[1], 16)
+            content_zoid = int(last_hex, 16)
+        else:
+            tid = int(last_hex, 16)
+            content_zoid = None
     except ValueError:
         raise ValueError(f"Invalid blob path: {path!r} (not valid hex)") from None
     return zoid, tid, content_zoid

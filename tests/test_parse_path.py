@@ -138,3 +138,30 @@ class TestParsePath:
 
         with pytest.raises(ValueError, match="Invalid blob path"):
             _parse_path("/ff")
+
+    def test_valid_path_with_extension(self):
+        """2-segment path with file extension."""
+        from zodb_pgjsonb_thumborblobloader.loader import _parse_path
+
+        zoid, tid, content_zoid = _parse_path("42/ff.jpg")
+        assert zoid == 0x42
+        assert tid == 0xFF
+        assert content_zoid is None
+
+    def test_valid_path_three_segments_with_extension(self):
+        """3-segment path with file extension."""
+        from zodb_pgjsonb_thumborblobloader.loader import _parse_path
+
+        zoid, tid, content_zoid = _parse_path("42/ff/1a.png")
+        assert zoid == 0x42
+        assert tid == 0xFF
+        assert content_zoid == 0x1A
+
+    def test_valid_path_with_complex_extension(self):
+        """Path with extension containing multiple dots (unlikely but supported)."""
+        from zodb_pgjsonb_thumborblobloader.loader import _parse_path
+
+        zoid, tid, content_zoid = _parse_path("42/ff.tar.gz")
+        assert zoid == 0x42
+        assert tid == 0xFF
+        assert content_zoid is None

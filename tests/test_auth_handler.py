@@ -80,6 +80,18 @@ class TestExtractContentZoid:
         result = handler._extract_content_zoid()
         assert result is None
 
+    def test_three_segment_url_with_extension(self):
+        """3-segment URL with extension → return content_zoid (stripped)."""
+        handler = self._make_handler("/hmac/500x400/42/ff/1a.jpg")
+        result = handler._extract_content_zoid()
+        assert result == "1a"
+
+    def test_two_segment_url_with_extension(self):
+        """2-segment URL with extension → return None."""
+        handler = self._make_handler("/hmac/500x400/42/ff.png")
+        result = handler._extract_content_zoid()
+        assert result is None
+
 
 class TestCheckAuth:
     """Test _check_auth() Plone subrequest logic and caching."""
