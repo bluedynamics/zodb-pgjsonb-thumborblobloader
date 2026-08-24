@@ -6,6 +6,11 @@
   The packaging metadata already declared `ZPL-2.1`, but the license text
   itself was missing from the repository, so GitHub reported "No license" and
   the terms could not be verified from the source tree alone. Fixes #12.
+  
+- Reformat the `thumbor.conf` example in the README. `ruff format` 0.16 also
+  formats Python code inside markdown fences, so the single-quoted string
+  literals in that block failed `qa / Ruff` on every pull request. No content
+  change.
 
 ## 0.4.2 (2026-04-20)
 
