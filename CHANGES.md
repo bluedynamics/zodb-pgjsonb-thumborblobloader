@@ -2,7 +2,10 @@
 
 ## 0.4.3 (unreleased)
 
-- Nothing changed yet.
+- Add the `LICENSE.txt` file with the full Zope Public License 2.1 text.
+  The packaging metadata already declared `ZPL-2.1`, but the license text
+  itself was missing from the repository, so GitHub reported "No license" and
+  the terms could not be verified from the source tree alone. Fixes #12.
 
 ## 0.4.2 (2026-04-20)
 
