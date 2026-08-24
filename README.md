@@ -25,23 +25,23 @@ pip install zodb-pgjsonb-thumborblobloader[s3]
 In your `thumbor.conf`:
 
 ```python
-LOADER = 'zodb_pgjsonb_thumborblobloader.loader'
+LOADER = "zodb_pgjsonb_thumborblobloader.loader"
 
 # Required
-PGTHUMBOR_DSN = 'dbname=zodb user=zodb password=zodb host=localhost port=5432'
+PGTHUMBOR_DSN = "dbname=zodb user=zodb password=zodb host=localhost port=5432"
 
 # Connection pool (optional)
 PGTHUMBOR_POOL_MIN_SIZE = 1
 PGTHUMBOR_POOL_MAX_SIZE = 10
 
 # Disk cache (optional)
-PGTHUMBOR_CACHE_DIR = '/var/cache/thumbor/blobs'
+PGTHUMBOR_CACHE_DIR = "/var/cache/thumbor/blobs"
 PGTHUMBOR_CACHE_MAX_SIZE = 1073741824  # 1 GB
 
 # S3 fallback (optional, requires [s3] extra)
-PGTHUMBOR_S3_BUCKET = 'my-blob-bucket'
-PGTHUMBOR_S3_REGION = 'eu-central-1'
-PGTHUMBOR_S3_ENDPOINT = 'https://s3.example.com'  # for MinIO/Ceph
+PGTHUMBOR_S3_BUCKET = "my-blob-bucket"
+PGTHUMBOR_S3_REGION = "eu-central-1"
+PGTHUMBOR_S3_ENDPOINT = "https://s3.example.com"  # for MinIO/Ceph
 ```
 
 ## URL Scheme
