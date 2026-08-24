@@ -2,7 +2,10 @@
 
 ## 0.4.3 (unreleased)
 
-- Nothing changed yet.
+- Reformat the `thumbor.conf` example in the README. `ruff format` 0.16 also
+  formats Python code inside markdown fences, so the single-quoted string
+  literals in that block failed `qa / Ruff` on every pull request. No content
+  change.
 
 ## 0.4.2 (2026-04-20)
 
