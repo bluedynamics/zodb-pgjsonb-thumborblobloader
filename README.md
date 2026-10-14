@@ -89,6 +89,8 @@ The image is automatically rebuilt weekly when a new Thumbor version appears on 
 | `PGTHUMBOR_DSN` | `""` | PostgreSQL connection string (required) |
 | `THUMBOR_SECURITY_KEY` | `"CHANGE-ME"` | Thumbor HMAC security key |
 | `ALLOW_UNSAFE_URL` | `"False"` | Allow unsigned URLs |
+| `THUMBOR_STORAGE` | `thumbor.storages.file_storage` | Thumbor storage for source images; `thumbor.storages.no_storage` disables it |
+| `THUMBOR_RESULT_STORAGE` | `thumbor.result_storages.file_storage` | Thumbor result storage; `thumbor.result_storages.no_storage` disables it |
 | `RESULT_STORAGE_PATH` | `/tmp/thumbor/result_storage` | Result cache directory |
 | `PGTHUMBOR_POOL_MIN_SIZE` | `1` | Min DB pool connections |
 | `PGTHUMBOR_POOL_MAX_SIZE` | `4` | Max DB pool connections |
@@ -109,6 +111,16 @@ The image is automatically rebuilt weekly when a new Thumbor version appears on 
 | `PGTHUMBOR_CACHE_CONTROL_ERROR` | `public, max-age=10` | Cache-Control for 4xx/5xx responses — microcache decouples transient errors from long-term cache poisoning and absorbs request floods for broken URLs |
 
 The Plone auth handler (and Cache-Control overrides) is only loaded when `PGTHUMBOR_PLONE_AUTH_URL` is set.
+
+### Bounding disk usage
+
+Thumbor's file storages keep every source image and every rendered result and never delete anything.
+In a container they grow until the disk or the ephemeral-storage limit is full.
+In production, run behind an HTTP cache (Varnish, a CDN) that caches the rendered results, and:
+
+- set `THUMBOR_STORAGE=thumbor.storages.no_storage` and `THUMBOR_RESULT_STORAGE=thumbor.result_storages.no_storage`,
+- enable the blob cache with `PGTHUMBOR_CACHE_DIR` and `PGTHUMBOR_CACHE_MAX_SIZE`, which evicts least recently used blobs,
+- put `PGTHUMBOR_CACHE_DIR` on a volume of its own (in Kubernetes, a generic ephemeral volume per pod), sized above `PGTHUMBOR_CACHE_MAX_SIZE`.
 
 ### Quick start
 
