@@ -2,6 +2,13 @@
 
 ## 0.4.3 (unreleased)
 
+- `THUMBOR_STORAGE` and `THUMBOR_RESULT_STORAGE` select Thumbor's storages from the
+  environment. Both default to the file storages as before. The file storages
+  never shrink: in a container with an ephemeral-storage limit of 4 Gi they filled
+  it within about four hours and got the pod evicted, over and over. The README
+  describes how to bound disk usage with the `no_storage` variants and the blob
+  cache.
+
 - Lower ruff's C901 max-complexity threshold from 15 to 13 as part of the
   ecosystem-wide complexity ratchet. The code base passes as-is.
 
