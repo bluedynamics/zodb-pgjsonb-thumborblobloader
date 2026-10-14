@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.4.3 (unreleased)
+## 0.4.3 (2026-10-14)
 
 - `THUMBOR_STORAGE` and `THUMBOR_RESULT_STORAGE` select Thumbor's storages from the
   environment. Both default to the file storages as before. The file storages
