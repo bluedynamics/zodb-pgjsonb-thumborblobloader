@@ -129,17 +129,16 @@ def make_context(**overrides):
 
 
 @pytest.fixture(autouse=True)
-def _reset_singletons():
+async def _reset_singletons():
     """Reset module-level singletons between tests."""
     yield
     from zodb_pgjsonb_thumborblobloader import pool as pool_mod
 
-    # Sync teardown — just discard refs; pool GC handles close
+    # Close the pool in the test's event loop.  Left open, its worker tasks
+    # are still running when pytest-asyncio closes the loop, and cancelling
+    # them there hung the test run on Python 3.12.
     if pool_mod._pool is not None:
-        import contextlib
-
-        with contextlib.suppress(Exception):
-            pool_mod._pool.close(timeout=0)
+        await pool_mod._pool.close(timeout=0)
     pool_mod._pool = None
     pool_mod._pool_dsn = None
     pool_mod._schema_verified = False

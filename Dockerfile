@@ -11,6 +11,9 @@ RUN uv pip install --system --no-cache \
 
 COPY thumbor.conf /etc/thumbor.conf
 
+# One malloc arena per thread fragments memory with large image buffers.
+ENV MALLOC_ARENA_MAX=2
+
 EXPOSE 8888
 
 CMD ["thumbor", "--conf=/etc/thumbor.conf"]
