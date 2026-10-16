@@ -101,6 +101,8 @@ The image is automatically rebuilt weekly when a new Thumbor version appears on 
 | `PGTHUMBOR_S3_ENDPOINT` | `""` | S3 endpoint for MinIO/Ceph (empty = AWS) |
 | `PGTHUMBOR_S3_ACCESS_KEY` | `""` | S3 access key (empty = boto3 default chain) |
 | `PGTHUMBOR_S3_SECRET_KEY` | `""` | S3 secret key (empty = boto3 default chain) |
+| `PGTHUMBOR_S3_MAX_WORKERS` | `8` | Threads for concurrent S3 downloads |
+| `PGTHUMBOR_S3_MAX_POOL_CONNECTIONS` | `50` | HTTP connections in the boto3 pool |
 | `THUMBOR_AUTO_WEBP` | `"true"` | Auto-convert to WebP when browser supports it |
 | `THUMBOR_AUTO_AVIF` | `"false"` | Auto-convert to AVIF when browser supports it |
 | `THUMBOR_DETECTORS` | `""` | Comma-separated Thumbor detector modules for `/smart/` URLs (empty = disabled) |
@@ -121,6 +123,16 @@ In production, run behind an HTTP cache (Varnish, a CDN) that caches the rendere
 - set `THUMBOR_STORAGE=thumbor.storages.no_storage` and `THUMBOR_RESULT_STORAGE=thumbor.result_storages.no_storage`,
 - enable the blob cache with `PGTHUMBOR_CACHE_DIR` and `PGTHUMBOR_CACHE_MAX_SIZE`, which evicts least recently used blobs,
 - put `PGTHUMBOR_CACHE_DIR` on a volume of its own (in Kubernetes, a generic ephemeral volume per pod), sized above `PGTHUMBOR_CACHE_MAX_SIZE`.
+
+### Bounding memory
+
+Thumbor decodes every source image completely, so one large original takes several hundred MiB for a moment.
+glibc keeps memory that a thread frees in that thread's own malloc arena and rarely returns it to the system.
+With many threads the process grows to well over a GiB without holding any data.
+
+- The Docker image sets `MALLOC_ARENA_MAX=2`. Set it yourself if you build your own image.
+- S3 downloads use `PGTHUMBOR_S3_MAX_WORKERS` threads (default 8), independent of the number of cores on the host.
+- Size the memory limit for the largest source image you expect. `MAX_PIXELS` in `thumbor.conf` (Thumbor's default: 75 million pixels) rejects larger ones with a 400.
 
 ### Quick start
 

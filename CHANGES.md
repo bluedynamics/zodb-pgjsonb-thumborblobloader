@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.4.4 (unreleased)
+
+- S3 downloads run in a thread pool of their own with 8 threads, set by
+  `PGTHUMBOR_S3_MAX_WORKERS`. Before, they used `asyncio.to_thread`, whose default
+  executor sizes itself from the host's cores and ignores a container CPU limit:
+  24 threads on a 20-core node. glibc gives each thread its own malloc arena, and
+  the freed download buffers stayed behind. In production 1.2 of 1.3 GiB resident
+  memory were fragmented arenas, the Python heap was 61 MiB, and decoding a large
+  image then pushed the pod over its 2 GiB memory limit.
+
+- The Docker image sets `MALLOC_ARENA_MAX=2`. Thumbor and the libraries it loads
+  start further threads; this bounds their arenas as well.
+
 ## 0.4.3 (2026-10-14)
 
 - `THUMBOR_STORAGE` and `THUMBOR_RESULT_STORAGE` select Thumbor's storages from the
