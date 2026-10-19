@@ -2,6 +2,23 @@
 
 ## 0.4.4 (unreleased)
 
+- GIFs go through gifsicle instead of Pillow: the Docker image installs gifsicle
+  and `thumbor.conf` sets `USE_GIFSICLE_ENGINE` from `THUMBOR_USE_GIFSICLE_ENGINE`,
+  on by default. Pillow decodes every frame of an animated GIF up front and
+  converts each to RGB(A) for the resize. In production a 1.9 MB GIF with 408
+  frames at 1920x1080 OOM-killed the pod on every cache miss; a synthetic 188 KB
+  GIF of the same shape takes Thumbor 7.8.0 to 3.6 GB and 123 s
+  ([thumbor/thumbor#1935](https://github.com/thumbor/thumbor/issues/1935)).
+  gifsicle renders the production GIF in 3 s with about 100 MB and keeps all
+  frames. With gifsicle, GIFs are not smart-cropped, filters do not apply to them,
+  and static GIFs stay GIF instead of being converted to WebP. Set
+  `THUMBOR_USE_GIFSICLE_ENGINE=false` for the previous behaviour.
+
+- The Docker build fails if Debian ships gifsicle 1.98 or later. Thumbor 7.8.0
+  passes float sizes such as `--resize 70x70.0`, which gifsicle 1.98 rejects, so
+  every animated GIF would fail with a 500
+  ([thumbor/thumbor#1933](https://github.com/thumbor/thumbor/pull/1933)).
+
 - S3 downloads run in a thread pool of their own with 8 threads, set by
   `PGTHUMBOR_S3_MAX_WORKERS`. Before, they used `asyncio.to_thread`, whose default
   executor sizes itself from the host's cores and ignores a container CPU limit:
