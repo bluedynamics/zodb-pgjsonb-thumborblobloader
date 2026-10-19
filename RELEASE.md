@@ -52,6 +52,9 @@ The Docker image is built and pushed to GHCR automatically.
 - `thumbor-<THUMBOR_VERSION>_loader-<LOADER_VERSION>` — versioned tag
 - `latest` — always points to the newest build
 
+The image installs the loader from the checkout it is built from (not from PyPI),
+so the tag and the code always match.
+
 On tagged releases the loader version is clean (e.g. `0.3.0`).
 On `main` pushes it includes the git describe suffix (e.g. `0.3.0-2-gabcdef0`).
 

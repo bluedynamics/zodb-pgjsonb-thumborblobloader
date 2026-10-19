@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.5 (unreleased)
+
+- The Docker image installs the loader from the checkout it is built from, not
+  from PyPI. The image for 0.4.4 was built while the release was still uploading
+  and shipped the 0.4.3 loader under the `loader-0.4.4` tag; because the install
+  line never changed, the layer cache could do the same on any rebuild. The
+  workflow passes the package version as `LOADER_VERSION`.
+
 ## 0.4.4 (2026-10-20)
 
 - GIFs go through gifsicle instead of Pillow: the Docker image installs gifsicle
