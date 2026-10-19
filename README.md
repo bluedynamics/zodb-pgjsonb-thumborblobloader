@@ -105,6 +105,7 @@ The image is automatically rebuilt weekly when a new Thumbor version appears on 
 | `PGTHUMBOR_S3_MAX_POOL_CONNECTIONS` | `50` | HTTP connections in the boto3 pool |
 | `THUMBOR_AUTO_WEBP` | `"true"` | Auto-convert to WebP when browser supports it |
 | `THUMBOR_AUTO_AVIF` | `"false"` | Auto-convert to AVIF when browser supports it |
+| `THUMBOR_USE_GIFSICLE_ENGINE` | `"true"` | Process GIFs with gifsicle instead of Pillow; see "Bounding memory" |
 | `THUMBOR_DETECTORS` | `""` | Comma-separated Thumbor detector modules for `/smart/` URLs (empty = disabled) |
 | `PGTHUMBOR_PLONE_AUTH_URL` | `""` | Plone internal URL for auth (empty = disabled) |
 | `PGTHUMBOR_AUTH_CACHE_TTL` | `60` | Auth cache TTL in seconds |
@@ -132,6 +133,7 @@ With many threads the process grows to well over a GiB without holding any data.
 
 - The Docker image sets `MALLOC_ARENA_MAX=2`. Set it yourself if you build your own image.
 - S3 downloads use `PGTHUMBOR_S3_MAX_WORKERS` threads (default 8), independent of the number of cores on the host.
+- GIFs go through gifsicle (`THUMBOR_USE_GIFSICLE_ENGINE`, on by default; the Docker image ships gifsicle). Pillow decodes every frame of an animated GIF and converts each to RGB(A): a 188 KB GIF with 408 frames at 1920x1080 took Thumbor to 3.6 GB ([thumbor/thumbor#1935](https://github.com/thumbor/thumbor/issues/1935)); gifsicle needs about 100 MB for it and keeps the animation. With gifsicle, GIFs are not smart-cropped, filters do not apply to them, and static GIFs stay GIF instead of being converted to WebP.
 - Size the memory limit for the largest source image you expect. `MAX_PIXELS` in `thumbor.conf` (Thumbor's default: 75 million pixels) rejects larger ones with a 400.
 
 ### Quick start
@@ -163,6 +165,8 @@ face/feature detection for intelligent cropping. Face detection is tried first;
 if no faces are found, feature detection (corners/edges) is used as fallback.
 Results are cached by Thumbor's result storage, so detection runs only once per
 unique URL.
+
+GIFs are not smart-cropped while `THUMBOR_USE_GIFSICLE_ENGINE` is on (the default).
 
 Available detectors:
 - `thumbor.detectors.face_detector` -- frontal face detection (OpenCV Haar cascade)
