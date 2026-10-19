@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.4.4 (unreleased)
+## 0.4.4 (2026-10-20)
 
 - GIFs go through gifsicle instead of Pillow: the Docker image installs gifsicle
   and `thumbor.conf` sets `USE_GIFSICLE_ENGINE` from `THUMBOR_USE_GIFSICLE_ENGINE`,
