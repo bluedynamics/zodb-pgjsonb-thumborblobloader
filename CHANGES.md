@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.4.5 (unreleased)
+## 0.4.5 (2026-10-20)
 
 - The Docker image installs the loader from the checkout it is built from, not
   from PyPI. The image for 0.4.4 was built while the release was still uploading
