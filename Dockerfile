@@ -1,6 +1,7 @@
 FROM python:3.13-trixie
 
-ARG LOADER_VERSION=""
+# Python package version of the checkout; .git is not in the build context.
+ARG LOADER_VERSION=0.0.0
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
@@ -14,8 +15,15 @@ RUN apt-get update \
 
 RUN uv pip install --system --no-cache \
     "thumbor>=7.0" \
-    "opencv-python-headless>=4.8" \
-    "zodb-pgjsonb-thumborblobloader[s3]${LOADER_VERSION:+==$LOADER_VERSION}"
+    "opencv-python-headless>=4.8"
+
+# The loader comes from this checkout, not from PyPI: the image is built while
+# the release is still uploading, and an unchanged install line let the layer
+# cache ship an older loader under a newer tag.
+COPY pyproject.toml README.md LICENSE.txt /src/
+COPY src /src/src
+RUN SETUPTOOLS_SCM_PRETEND_VERSION="${LOADER_VERSION}" \
+    uv pip install --system --no-cache "/src[s3]"
 
 COPY thumbor.conf /etc/thumbor.conf
 

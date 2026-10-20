@@ -26,6 +26,8 @@ jobs:
         with:
           fetch-depth: 0
 
+      - uses: astral-sh/setup-uv@v6
+
       - name: Determine versions
         id: versions
         run: |
@@ -38,6 +40,10 @@ jobs:
             LOADER_VERSION="0.0.0"
           fi
           echo "loader=${LOADER_VERSION}" >> "$GITHUB_OUTPUT"
+
+          # Python package version for the build (PEP 440, as hatch-vcs computes it)
+          PACKAGE_VERSION=$(uvx --from hatchling --with hatch-vcs hatchling version)
+          echo "package=${PACKAGE_VERSION}" >> "$GITHUB_OUTPUT"
 
           echo "### Versions" >> "$GITHUB_STEP_SUMMARY"
           echo "- Thumbor: ${THUMBOR_VERSION}" >> "$GITHUB_STEP_SUMMARY"
@@ -68,5 +74,7 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            LOADER_VERSION=${{ steps.versions.outputs.package }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
