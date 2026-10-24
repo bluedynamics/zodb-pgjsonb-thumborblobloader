@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.6 (unreleased)
+
+- Declare and test Python 3.14 and 3.15 support: trove classifiers and CI test
+  matrix. The test suite passes on 3.15.0 without code changes. The Docker
+  image stays on Python 3.13.
+
 ## 0.4.5 (2026-10-20)
 
 - The Docker image installs the loader from the checkout it is built from, not
